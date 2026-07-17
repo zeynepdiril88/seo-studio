@@ -16,9 +16,14 @@ type Research = {
 
 type Comp = {
   query: string;
-  competitors: { url: string; title: string; covers: string; strength: string; weakness: string }[];
-  commonSkeleton: string[];
-  gaps: { coverage: string[]; depth: string[]; experience: string[] };
+  market: string;
+  pagesAnalyzed: number;
+  competitors: { url: string; title: string; format: string; wordCount: string; sourceProfile: string; standout: string; weakness: string; skeleton: string[]; sources: string[] }[];
+  commonSkeleton: { block: string; frequency: string; detail: string }[];
+  keywordMap: { core: string[]; secondary: string[]; mechanism: string[]; practice: string[]; application: string[]; questions: string[] };
+  gaps: { title: string; detail: string }[];
+  eeatGaps: { title: string; detail: string }[];
+  aiSearchGaps: { title: string; detail: string }[];
   whatToBeat: string;
   aiOverviewSnapshot: string;
 };
@@ -95,45 +100,107 @@ export default function ResearchPage() {
 
       {comp && (
         <div className="reveal" style={{ marginTop: 20 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, margin: "6px 0 4px" }}>Competitor content report</h2>
+          <p className="muted" style={{ fontSize: 13, marginBottom: 14 }}>{comp.pagesAnalyzed || comp.competitors?.length} pages · {comp.market || "US"} · <span className="chip ghost" style={{ fontSize: 10 }}>representative</span></p>
+
           <div className="card">
-            <div className="card-hd"><h3>Top competitors</h3><span className="chip ghost" style={{ fontSize: 11 }}>representative</span></div>
-            {comp.competitors.map((c, i) => (
-              <div key={i} style={{ padding: "12px 0", borderTop: i ? "1px solid var(--line)" : "none" }}>
-                <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
-                  <span className="mono muted" style={{ fontSize: 12, width: 20 }}>{i + 1}</span>
-                  <a href={c.url} target="_blank" rel="noreferrer" style={{ fontWeight: 600, fontSize: 14, color: "var(--purple)" }}>{c.title}</a>
+            <div className="card-hd"><h3>Ranking pages</h3><span className="muted" style={{ fontSize: 12 }}>click a row for its outline</span></div>
+            {comp.competitors?.map((c, i) => (
+              <details key={i} style={{ borderTop: i ? "1px solid var(--line)" : "none", padding: "10px 0" }}>
+                <summary style={{ cursor: "pointer", listStyle: "none", display: "flex", gap: 10, alignItems: "baseline", flexWrap: "wrap" }}>
+                  <span className="mono muted" style={{ fontSize: 12, width: 18 }}>{i + 1}</span>
+                  <span style={{ fontWeight: 600, fontSize: 14 }}>{c.title}</span>
+                  {c.format && <span className="chip" style={{ fontSize: 11 }}>{c.format}</span>}
+                  {c.wordCount && <span className="mono muted" style={{ fontSize: 12 }}>{c.wordCount}</span>}
+                </summary>
+                <div style={{ paddingLeft: 28, marginTop: 6 }}>
+                  <a href={c.url} target="_blank" rel="noreferrer" className="muted" style={{ fontSize: 12, wordBreak: "break-all" }}>{c.url}</a>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 10 }}>
+                    <div>
+                      <div className="eyebrow" style={{ marginBottom: 6 }}>Outline</div>
+                      <ul style={{ margin: 0, paddingLeft: 16 }}>{(c.skeleton || []).map((s, j) => <li key={j} style={{ fontSize: 13, marginBottom: 3 }}>{s}</li>)}</ul>
+                    </div>
+                    <div>
+                      <div className="eyebrow" style={{ marginBottom: 6 }}>Sources &amp; assets</div>
+                      <ul style={{ margin: 0, paddingLeft: 16 }}>{(c.sources || []).map((s, j) => <li key={j} className="muted" style={{ fontSize: 13, marginBottom: 3 }}>{s}</li>)}</ul>
+                    </div>
+                  </div>
+                  {c.sourceProfile && <div style={{ fontSize: 12.5, marginTop: 8 }}><strong>Sources:</strong> <span className="muted">{c.sourceProfile}</span></div>}
+                  {c.standout && <div style={{ fontSize: 12.5, marginTop: 3, color: "var(--purple)" }}>+ {c.standout}</div>}
+                  {c.weakness && <div style={{ fontSize: 12.5, marginTop: 2, color: "var(--soft)" }}>− {c.weakness}</div>}
                 </div>
-                <div className="muted" style={{ fontSize: 12, marginTop: 3, wordBreak: "break-all" }}>{c.url}</div>
-                {c.covers && <div style={{ fontSize: 13, marginTop: 5 }}>{c.covers}</div>}
-                {c.weakness && <div style={{ fontSize: 12.5, marginTop: 4, color: "var(--soft)" }}><strong style={{ color: "var(--ink)" }}>Weakness:</strong> {c.weakness}</div>}
+              </details>
+            ))}
+          </div>
+
+          <div className="card" style={{ marginTop: 16 }}>
+            <div className="card-hd"><h3>Common content skeleton</h3></div>
+            {(comp.commonSkeleton || []).map((b, i) => (
+              <div key={i} style={{ display: "flex", gap: 12, padding: "8px 0", borderTop: i ? "1px solid var(--line)" : "none" }}>
+                <span className="mono muted" style={{ fontSize: 12, width: 24, flexShrink: 0 }}>{i + 1}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 600 }}>{b.block} <span className="mono" style={{ fontSize: 11, color: "var(--purple)" }}>{b.frequency}</span></div>
+                  <div className="muted" style={{ fontSize: 12.5, marginTop: 2 }}>{b.detail}</div>
+                </div>
               </div>
             ))}
           </div>
 
+          {comp.keywordMap && (
+            <div className="card" style={{ marginTop: 16 }}>
+              <div className="card-hd"><h3>Semantic keyword map</h3></div>
+              {([["Core", comp.keywordMap.core], ["Secondary", comp.keywordMap.secondary], ["Mechanism / science", comp.keywordMap.mechanism], ["Practices", comp.keywordMap.practice], ["Applications", comp.keywordMap.application], ["Questions", comp.keywordMap.questions]] as const).map(([label, items]) =>
+                items && items.length ? (
+                  <div key={label} style={{ marginBottom: 12 }}>
+                    <div className="eyebrow" style={{ marginBottom: 6 }}>{label}</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{items.map((t) => <span key={t} className="chip">{t}</span>)}</div>
+                  </div>
+                ) : null
+              )}
+            </div>
+          )}
+
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))", gap: 16, marginTop: 16 }}>
             <div className="card">
-              <div className="card-hd"><h3>Gap analysis</h3></div>
-              {([["Coverage gap", comp.gaps?.coverage], ["Depth gap", comp.gaps?.depth], ["Experience gap", comp.gaps?.experience]] as const).map(([label, items]) => (
-                <div key={label} style={{ marginBottom: 12 }}>
-                  <div className="eyebrow" style={{ marginBottom: 6 }}>{label}</div>
-                  <ul style={{ margin: 0, paddingLeft: 16 }}>{(items || []).map((g, i) => <li key={i} className="muted" style={{ fontSize: 13, marginBottom: 3 }}>{g}</li>)}</ul>
+              <div className="card-hd"><h3>Content gaps &amp; opportunities</h3></div>
+              {(comp.gaps || []).map((g, i) => (
+                <div key={i} style={{ padding: "10px 0", borderTop: i ? "1px solid var(--line)" : "none" }}>
+                  <div style={{ fontWeight: 600, fontSize: 14 }}>{g.title}</div>
+                  <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>{g.detail}</div>
                 </div>
               ))}
-            </div>
-            <div className="card">
-              <div className="card-hd"><h3>Common skeleton</h3></div>
-              <ul style={{ margin: 0, paddingLeft: 16 }}>{(comp.commonSkeleton || []).map((h, i) => <li key={i} style={{ fontSize: 13.5, marginBottom: 4 }}>{h}</li>)}</ul>
               {comp.whatToBeat && (
-                <div style={{ marginTop: 14, padding: "12px 14px", background: "var(--purple-soft)", borderRadius: 10 }}>
+                <div style={{ marginTop: 12, padding: "12px 14px", background: "var(--purple-soft)", borderRadius: 10 }}>
                   <div className="eyebrow accent" style={{ marginBottom: 4 }}>What to beat</div>
                   <div style={{ fontSize: 13.5 }}>{comp.whatToBeat}</div>
                 </div>
               )}
-              {comp.aiOverviewSnapshot && (
-                <div style={{ marginTop: 10, fontSize: 13, color: "var(--soft)" }}><strong style={{ color: "var(--ink)" }}>AI Overview:</strong> {comp.aiOverviewSnapshot}</div>
-              )}
+            </div>
+            <div className="card">
+              <div className="card-hd"><h3>EEAT &amp; AI-search gaps</h3><span className="muted" style={{ fontSize: 11 }}>none apply these</span></div>
+              <div className="eyebrow" style={{ marginBottom: 6 }}>EEAT — nobody does</div>
+              {(comp.eeatGaps || []).map((g, i) => (
+                <div key={i} style={{ padding: "7px 0", borderTop: i ? "1px solid var(--line)" : "none" }}>
+                  <div style={{ fontWeight: 600, fontSize: 13 }}>{g.title}</div>
+                  <div className="muted" style={{ fontSize: 12.5, marginTop: 2 }}>{g.detail}</div>
+                </div>
+              ))}
+              <div className="eyebrow" style={{ margin: "14px 0 6px" }}>AI search — missed formats</div>
+              {(comp.aiSearchGaps || []).map((g, i) => (
+                <div key={i} style={{ padding: "7px 0", borderTop: i ? "1px solid var(--line)" : "none" }}>
+                  <div style={{ fontWeight: 600, fontSize: 13 }}>{g.title}</div>
+                  <div className="muted" style={{ fontSize: 12.5, marginTop: 2 }}>{g.detail}</div>
+                </div>
+              ))}
             </div>
           </div>
+
+          {comp.aiOverviewSnapshot && (
+            <div className="card" style={{ marginTop: 16 }}>
+              <div className="eyebrow accent" style={{ marginBottom: 6 }}>AI Overview snapshot</div>
+              <div style={{ fontSize: 13.5, lineHeight: 1.5 }}>{comp.aiOverviewSnapshot}</div>
+            </div>
+          )}
         </div>
       )}
 
