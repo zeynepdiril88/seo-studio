@@ -54,6 +54,7 @@ export default function ResearchPage() {
     e.preventDefault();
     if (!seed.trim() || loading) return;
     setLoading(true); setError(""); setData(null);
+    void analyzeCompetitors(); // run competitor analysis in parallel with the query universe
     try {
       const res = await fetch("/api/research", {
         method: "POST",
@@ -89,19 +90,13 @@ export default function ResearchPage() {
         </div>
       </form>
 
-      <div style={{ marginTop: 12 }}>
-        <button className="btn-outline" onClick={analyzeCompetitors} disabled={compLoading || !seed.trim()}>
-          {compLoading ? "Analyzing top-10 competitors…" : "Analyze top-10 competitors (live)"}
-        </button>
-      </div>
-
-      {compError && <div className="card" style={{ marginTop: 14, borderColor: "#e6c3ba", background: "#faf1ee" }}><span style={{ color: "#a13a26", fontSize: 14 }}>{compError}</span></div>}
-      {compLoading && !comp && <p className="muted" style={{ marginTop: 12, fontSize: 14 }}>Searching Google for the top organic results and analyzing gaps — ~30–50 seconds.</p>}
+      {compError && <div className="card" style={{ marginTop: 14, borderColor: "#e6c3ba", background: "#faf1ee" }}><span style={{ color: "#a13a26", fontSize: 14 }}>Competitors: {compError}</span></div>}
+      {compLoading && !comp && <p className="muted" style={{ marginTop: 12, fontSize: 14 }}>Analyzing the competitive landscape and gaps…</p>}
 
       {comp && (
         <div className="reveal" style={{ marginTop: 20 }}>
           <div className="card">
-            <div className="card-hd"><h3>Top competitors</h3><span className="muted" style={{ fontSize: 12 }}>live organic results</span></div>
+            <div className="card-hd"><h3>Top competitors</h3><span className="chip ghost" style={{ fontSize: 11 }}>representative</span></div>
             {comp.competitors.map((c, i) => (
               <div key={i} style={{ padding: "12px 0", borderTop: i ? "1px solid var(--line)" : "none" }}>
                 <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>

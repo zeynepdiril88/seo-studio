@@ -4,9 +4,9 @@ import { generate, extractJson } from "@/lib/ai";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const SYSTEM = `You are a competitive SEO analyst. Use Google Search to find the CURRENT top organic (non-advertisement) ranking pages on Google for the given query and region. Read what each covers, then produce a competitive gap analysis.
+const SYSTEM = `You are a competitive SEO analyst. For the given query and region, produce a competitor content analysis based on your knowledge of the sites that typically rank organically for this topic.
 
-Return a JSON object (you may add brief text around it, but the JSON must be present and valid), EXACTLY this shape:
+Return STRICT JSON only (no prose, no fences), EXACTLY:
 {
   "query": string,
   "competitors": [ { "url": string, "title": string, "covers": string, "strength": string, "weakness": string } ],
@@ -17,12 +17,12 @@ Return a JSON object (you may add brief text around it, but the JSON must be pre
 }
 
 Rules:
-- Use REAL URLs and titles from your Google Search results — organic results only, exclude ads.
-- Up to 10 competitors, ordered by ranking.
-- commonSkeleton = the shared H2 sections most of them use.
-- gaps: coverage (topics/entities none of them cover), depth (where they stay shallow and you could go deeper), experience (frameworks / exercises / templates / original data they lack).
-- whatToBeat = the single weakest common point across them.
-- aiOverviewSnapshot = how this topic is currently answered in Google's AI Overview / featured snippet, so we target being the cited source.`;
+- List up to 10 well-known, REAL sites/brands that realistically rank for this topic (e.g. Healthline, Calm, Verywell, authoritative .edu/.org). Use realistic domain URLs (best-known, not fabricated deep links).
+- commonSkeleton = the shared H2 sections most ranking pages use.
+- gaps: coverage (topics/entities none cover), depth (where they stay shallow), experience (frameworks / exercises / templates / original data they lack).
+- whatToBeat = the single weakest common point.
+- aiOverviewSnapshot = how this topic is typically answered in Google's AI Overview / featured snippet.
+- These are representative from your knowledge (not a live SERP scrape); be realistic and specific to the topic.`;
 
 export async function POST(req: Request) {
   let query = "";
@@ -39,12 +39,10 @@ export async function POST(req: Request) {
   try {
     const text = await generate({
       system: SYSTEM,
-      temperature: 0.4,
-      maxTokens: 8192,
+      temperature: 0.5,
+      maxTokens: 6000,
       think: true,
-      json: false,
-      search: true,
-      messages: [{ role: "user", content: `Query: ${query}\nRegion: ${region}\n\nFind the top organic competitors and return the JSON.` }],
+      messages: [{ role: "user", content: `Query: ${query}\nRegion: ${region}\n\nReturn the JSON competitor analysis.` }],
     });
     return NextResponse.json(extractJson(text));
   } catch (e) {

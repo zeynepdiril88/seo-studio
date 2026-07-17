@@ -56,7 +56,7 @@ export default function Landing() {
           {[
             ["01", "Research", "Query research → the real queries and search intents behind your topic."],
             ["02", "Authority", "Build an editable topical map — pillars, clusters, ontology and gaps — to own the whole topic."],
-            ["03", "Produce", "Generate content engineered to rank and get cited: direct answers, quotable stats, FAQ schema."],
+            ["03", "Create", "Authority-building content writing — engineered to rank on Google and get cited in AI search."],
           ].map(([n, t, d]) => (
             <div key={n} className="card" style={{ padding: 22 }}>
               <span className="mono muted" style={{ fontSize: 13 }}>{n}</span>
