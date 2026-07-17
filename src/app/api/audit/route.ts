@@ -76,7 +76,6 @@ export async function POST(req: Request) {
       system: SYSTEM,
       temperature: 0.3,
       maxTokens: 8192,
-      think: true,
       messages: [
         {
           role: "user",
