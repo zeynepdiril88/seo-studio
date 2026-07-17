@@ -20,6 +20,9 @@ Rules:
 - INTERNAL LINKS: support → cluster → pillar; anchor = descriptive entity phrase, never "click here".
 - QUALITY NODES: 1-3 flagship framework pages.
 - RESEARCH SUGGESTIONS: for the GAPS, propose keywords + the search intent behind each, to research next.
+- ENTITY REINFORCEMENT (Knowledge Graph): for the central entity and the pillars, name the authoritative EXTERNAL entities to cite / link / sameAs — Wikipedia, Wikidata, official bodies, .gov / .edu, recognized named experts — that corroborate the topic and connect the site to the knowledge graph. source = the concrete reference; why = the signal it sends.
+- RANKING SIGNAL TRANSITION: the publishing SEQUENCE that transitions topical coverage into ranking authority — ordered phases (what to publish first, next, last) and WHY each phase builds momentum (e.g. quality nodes first to set context, then the supporting queries to consolidate, then the comparison/BOFU nodes). Not a flat list — every phase justified.
+- CONTENT PRUNING: ONLY when SITE CONTENT is provided — identify existing pages that are thin, outdated, overlapping or cannibalizing, and whether to prune (remove), merge (consolidate) or update (refresh), each with the reason. If no site content is given, return an empty pruning array.
 
 Return STRICT JSON only (no prose, no fences), EXACTLY:
 {
@@ -32,9 +35,11 @@ Return STRICT JSON only (no prose, no fences), EXACTLY:
   "researchSuggestions": [ { "keyword": string, "intent": string, "why": string } ],
   "internalLinks": [ { "from": string, "to": string, "anchor": string } ],
   "qualityNodes": [ { "title": string, "why": string } ],
-  "publishingOrder": string[]
+  "entityReinforcement": [ { "entity": string, "source": string, "why": string } ],
+  "rankingSignalTransition": [ { "phase": string, "publish": string, "why": string } ],
+  "pruning": [ { "page": string, "action": "prune"|"merge"|"update", "why": string } ]
 }
-Produce 3-5 pillars, 2-4 clusters each, 2-3 support each; 8-14 ontology edges; 3-5 per gap type; 4-8 researchSuggestions; 6-10 internal links; 1-3 quality nodes.`;
+Produce 3-5 pillars, 2-4 clusters each, 2-3 support each; 8-14 ontology edges; 3-5 per gap type; 4-8 researchSuggestions; 6-10 internal links; 1-3 quality nodes; 4-8 entityReinforcement; 3-5 rankingSignalTransition phases; 0-6 pruning items (empty array if no site content).`;
 
 function normalizeUrl(raw: string): string {
   let u = raw.trim();
@@ -87,7 +92,7 @@ export async function POST(req: Request) {
     const text = await generate({
       system: SYSTEM,
       temperature: 0.5,
-      maxTokens: 6000,
+      maxTokens: 8192,
       messages: [{ role: "user", content: parts.join("\n") }],
     });
     return NextResponse.json(extractJson(text));

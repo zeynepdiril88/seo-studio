@@ -18,7 +18,9 @@ type TopMap = {
   researchSuggestions: { keyword: string; intent: string; why: string }[];
   internalLinks: { from: string; to: string; anchor: string }[];
   qualityNodes: { title: string; why: string }[];
-  publishingOrder: string[];
+  entityReinforcement: { entity: string; source: string; why: string }[];
+  rankingSignalTransition: { phase: string; publish: string; why: string }[];
+  pruning: { page: string; action: string; why: string }[];
 };
 
 const QTYPES = ["Definition", "Problem", "Solution", "Comparison", "Beginner"];
@@ -210,7 +212,48 @@ export default function AuthorityPage() {
                 </div>
               ))}
             </div>
+            {map.entityReinforcement?.length ? (
+              <div className="card">
+                <div className="card-hd"><h3>Entity reinforcement</h3><span className="muted" style={{ fontSize: 12 }}>knowledge-graph corroboration</span></div>
+                {map.entityReinforcement.map((e, i) => (
+                  <div key={i} style={{ padding: "8px 0", borderTop: i ? "1px solid var(--line)" : "none", fontSize: 13 }}>
+                    <div style={{ fontWeight: 600 }}>{e.entity} <span className="mono" style={{ color: "var(--purple)", fontWeight: 400, fontSize: 12 }}>· {e.source}</span></div>
+                    <div className="muted" style={{ marginTop: 3 }}>{e.why}</div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </div>
+
+          {map.rankingSignalTransition?.length ? (
+            <div className="card" style={{ marginTop: 20 }}>
+              <div className="card-hd"><h3>Ranking signal transition</h3><span className="muted" style={{ fontSize: 12 }}>publish in this order to build authority</span></div>
+              <div style={{ display: "grid", gap: 12, marginTop: 4 }}>
+                {map.rankingSignalTransition.map((p, i) => (
+                  <div key={i} style={{ display: "flex", gap: 12, alignItems: "baseline" }}>
+                    <span className="mono" style={{ color: "var(--purple)", fontWeight: 700, fontSize: 13, flexShrink: 0 }}>{String(i + 1).padStart(2, "0")}</span>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>{p.phase} — <span style={{ fontWeight: 500 }}>{p.publish}</span></div>
+                      <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>{p.why}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {map.pruning?.length ? (
+            <div className="card" style={{ marginTop: 16 }}>
+              <div className="card-hd"><h3>Content pruning</h3><span className="muted" style={{ fontSize: 12 }}>from your existing site</span></div>
+              {map.pruning.map((p, i) => (
+                <div key={i} style={{ display: "flex", gap: 10, alignItems: "baseline", padding: "9px 0", borderTop: i ? "1px solid var(--line)" : "none", flexWrap: "wrap" }}>
+                  <span className={"badge " + (p.action === "prune" ? "b-high" : p.action === "merge" ? "b-med" : "b-low")}>{p.action}</span>
+                  <span style={{ fontWeight: 600, fontSize: 13.5 }}>{p.page}</span>
+                  <span className="muted" style={{ fontSize: 13, flex: 1, minWidth: 180 }}>{p.why}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </div>
       )}
     </div>

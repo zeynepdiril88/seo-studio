@@ -17,6 +17,7 @@ type Outline = {
   internalLinks: { anchor: string; target: string }[];
   externalRefs: { label: string; type: string }[];
   faq: { q: string; a: string }[];
+  eeatSignals?: { experience: string; expertise: string; authoritativeness: string; trust: string[] };
 };
 
 function WriteInner() {
@@ -175,6 +176,27 @@ function WriteInner() {
               </div>
             ))}
           </div>
+
+          {/* E-E-A-T signals */}
+          {outline.eeatSignals && (
+            <div className="card" style={{ marginTop: 16 }}>
+              <div className="card-hd"><h3>E-E-A-T signals</h3><span className="muted" style={{ fontSize: 12 }}>authority the draft is written to carry</span></div>
+              {([["Experience", outline.eeatSignals.experience], ["Expertise", outline.eeatSignals.expertise], ["Authoritativeness", outline.eeatSignals.authoritativeness]] as const).map(([label, val], i) => (
+                <div key={label} style={{ padding: "9px 0", borderTop: i ? "1px solid var(--line)" : "none" }}>
+                  <span className="eyebrow accent" style={{ display: "block", marginBottom: 3 }}>{label}</span>
+                  <span className="muted" style={{ fontSize: 13.5, lineHeight: 1.5 }}>{val}</span>
+                </div>
+              ))}
+              {outline.eeatSignals.trust?.length ? (
+                <div style={{ padding: "9px 0", borderTop: "1px solid var(--line)" }}>
+                  <span className="eyebrow accent" style={{ display: "block", marginBottom: 6 }}>Trustworthiness — primary sources</span>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {outline.eeatSignals.trust.map((t) => <span key={t} className="chip">{t}</span>)}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          )}
 
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 20, flexWrap: "wrap" }}>
             <button className="btn" onClick={genDraft} disabled={drafting}>

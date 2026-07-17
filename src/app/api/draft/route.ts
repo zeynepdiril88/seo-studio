@@ -14,10 +14,16 @@ Rules:
 - Insert the internal links as Markdown links using the given descriptive anchor text → its target (e.g. [nervous system regulation techniques](/target)). Never "click here".
 - Cite the external references where relevant.
 - Include one quotable, specific statistic or factual sentence per section where natural (AI-citable).
+- EEAT — weave through the prose, never a bolted-on section:
+  · Experience — write from concrete, first-hand framing where the topic allows ("In practice…", "When applied…", observed results). Be specific, not abstract. Never fabricate personal identity claims.
+  · Expertise — use precise, correct terminology and explain mechanisms, not just outcomes; carry the authority of the outline's author angle in the tone.
+  · Authoritativeness — feature the outline's original asset (original data, a named framework / methodology, or a distinct point of view) so this reads as the source others would cite, not a recap.
+  · Trustworthiness — attribute concrete claims to a primary source inline (study, official body, named expert). FAQ answers must be sourced too, not generic.
 - End with a "## FAQ" section: each question as a bolded line, then a concise answer (FAQPage-ready).
+- After the FAQ, add a one-line author / expertise note reflecting the outline's author angle (if any), then an italic "*Last updated: {DATE}*" line using the date provided in the prompt.
 - Publication-ready grammar and style. Confident, clear, declarative sentences. Write in English.
 
-Return ONLY the Markdown article — no JSON, no code fences, no preamble or sign-off.`;
+Return ONLY the Markdown article — no JSON, no code fences, no preamble. The only closing content is the author note and the Last updated line.`;
 
 export async function POST(req: Request) {
   let outline: unknown = null;
@@ -31,9 +37,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Generate an outline first, then write the draft." }, { status: 400 });
   }
 
-  const content = outline
-    ? `Write the full article from this outline:\n\n${JSON.stringify(outline)}`
-    : `Write a full, GEO-optimized article targeting the query: ${query}`;
+  const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long" });
+  const content =
+    (outline
+      ? `Write the full article from this outline:\n\n${JSON.stringify(outline)}`
+      : `Write a full, GEO-optimized article targeting the query: ${query}`) +
+    `\n\nToday's date (use for the Last updated line): ${today}`;
 
   try {
     const markdown = await generate({
