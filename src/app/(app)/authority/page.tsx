@@ -106,11 +106,40 @@ export default function AuthorityPage() {
             <p className="muted" style={{ fontSize: 13, marginTop: 8 }}><strong>Entity:</strong> {map.centralEntity} &nbsp;·&nbsp; <strong>Source context:</strong> {map.sourceContext}</p>
           </div>
 
+          {/* at-a-glance summary — makes the scale of the map legible */}
+          {(() => {
+            const clusters = map.pillars.reduce((a, p) => a + p.clusters.length, 0);
+            const queries = map.pillars.reduce((a, p) => a + p.clusters.reduce((b, c) => b + c.support.length, 0), 0);
+            const covered = map.pillars.reduce((a, p) => a + p.clusters.reduce((b, c) => b + c.support.filter((s) => s.covered).length, 0), 0);
+            const gapCount = (map.gaps.coverage?.length || 0) + (map.gaps.depth?.length || 0) + (map.gaps.experience?.length || 0);
+            const stats: [number, string][] = [
+              [map.pillars.length, "pillars"],
+              [clusters, "clusters"],
+              [queries, "target queries"],
+              [gapCount, "gaps to fill"],
+              [map.internalLinks.length, "internal links"],
+            ];
+            if (covered > 0) stats.splice(3, 0, [covered, "already covered"]);
+            return (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 14 }}>
+                {stats.map(([n, label]) => (
+                  <div key={label} className="card" style={{ padding: "12px 16px", display: "flex", alignItems: "baseline", gap: 8, flex: "1 1 auto", minWidth: 110 }}>
+                    <span style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.5px" }}>{n}</span>
+                    <span className="muted" style={{ fontSize: 12.5 }}>{label}</span>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+
           {/* editable topical map */}
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", margin: "26px 0 6px", flexWrap: "wrap", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", margin: "26px 0 4px", flexWrap: "wrap", gap: 8 }}>
             <h2 style={{ fontSize: 18, fontWeight: 700 }}>Topical map</h2>
             <span className="muted" style={{ fontSize: 12.5 }}>Click to rename · + add · × remove · <span style={{ color: "var(--purple)" }}>●</span> covered <span style={{ color: "var(--pink)" }}>●</span> gap</span>
           </div>
+          <p className="muted" style={{ fontSize: 13, margin: "0 0 12px", maxWidth: 680, lineHeight: 1.5 }}>
+            <strong style={{ color: "var(--ink)" }}>Pillars</strong> are the big hub pages, <strong style={{ color: "var(--ink)" }}>clusters</strong> are their subtopics, and each row is a real <strong style={{ color: "var(--ink)" }}>query</strong> to write a page for. Click any query&apos;s <span style={{ color: "var(--purple)" }}>Outline →</span> to turn it into an article.
+          </p>
 
           <div style={{ display: "grid", gap: 14 }}>
             {map.pillars.map((p, pi) => (
@@ -174,7 +203,8 @@ export default function AuthorityPage() {
           {/* insights (read-only reference) */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))", gap: 16, marginTop: 20 }}>
             <div className="card">
-              <div className="card-hd"><h3>Ontology — entity relationships</h3></div>
+              <div className="card-hd"><h3>Ontology — how concepts connect</h3></div>
+              <p className="muted" style={{ fontSize: 12.5, margin: "0 0 10px", lineHeight: 1.5 }}>The semantic web behind the topic. Each line is <em>concept → relationship → concept</em> — an internal-link path to build and a signal of depth that helps Google and AI engines trust your coverage.</p>
               {map.ontology.map((e, i) => (
                 <div key={i} style={{ display: "flex", gap: 8, alignItems: "baseline", padding: "6px 0", fontSize: 13.5, flexWrap: "wrap" }}>
                   <span style={{ fontWeight: 600 }}>{e.from}</span>
@@ -185,6 +215,7 @@ export default function AuthorityPage() {
             </div>
             <div className="card">
               <div className="card-hd"><h3>Gap analysis</h3></div>
+              <p className="muted" style={{ fontSize: 12.5, margin: "0 0 10px", lineHeight: 1.5 }}>What&apos;s missing for full authority. <strong>Coverage</strong> = subtopics you don&apos;t cover yet · <strong>Depth</strong> = where to go deeper · <strong>Experience</strong> = original frameworks only you can add.</p>
               {([["Coverage gap", map.gaps.coverage], ["Depth gap", map.gaps.depth], ["Experience gap", map.gaps.experience]] as const).map(([label, items]) => (
                 <div key={label} style={{ marginBottom: 12 }}>
                   <div className="eyebrow" style={{ marginBottom: 6 }}>{label}</div>
@@ -195,7 +226,8 @@ export default function AuthorityPage() {
               ))}
             </div>
             <div className="card">
-              <div className="card-hd"><h3>Internal linking</h3><span className="muted" style={{ fontSize: 12 }}>support → cluster → pillar</span></div>
+              <div className="card-hd"><h3>Internal linking</h3><span className="muted" style={{ fontSize: 12 }}>hub-and-spoke</span></div>
+              <p className="muted" style={{ fontSize: 12.5, margin: "0 0 10px", lineHeight: 1.5 }}>The link plan: clusters link up to their pillar (the hub), plus lateral links between related topics. Use the exact <strong>anchor text</strong> — descriptive, never &ldquo;click here.&rdquo;</p>
               {map.internalLinks.map((l, i) => (
                 <div key={i} style={{ padding: "8px 0", borderTop: i ? "1px solid var(--line)" : "none", fontSize: 13 }}>
                   <span className="muted">{l.from}</span> <span className="mono" style={{ color: "var(--purple)" }}>→</span> <span className="muted">{l.to}</span>
@@ -205,6 +237,7 @@ export default function AuthorityPage() {
             </div>
             <div className="card">
               <div className="card-hd"><h3>Quality nodes</h3></div>
+              <p className="muted" style={{ fontSize: 12.5, margin: "0 0 10px", lineHeight: 1.5 }}>Your flagship pages. Publish these first — they define the topic and every other page links back to them.</p>
               {map.qualityNodes.map((q, i) => (
                 <div key={i} style={{ padding: "10px 0", borderTop: i ? "1px solid var(--line)" : "none" }}>
                   <div style={{ fontWeight: 600, fontSize: 14 }}>{q.title}</div>
@@ -215,6 +248,7 @@ export default function AuthorityPage() {
             {map.entityReinforcement?.length ? (
               <div className="card">
                 <div className="card-hd"><h3>Entity reinforcement</h3><span className="muted" style={{ fontSize: 12 }}>knowledge-graph corroboration</span></div>
+                <p className="muted" style={{ fontSize: 12.5, margin: "0 0 10px", lineHeight: 1.5 }}>Authoritative outside sources to cite and link. They corroborate your topic and tie your site into the knowledge graph that Google and AI engines trust.</p>
                 {map.entityReinforcement.map((e, i) => (
                   <div key={i} style={{ padding: "8px 0", borderTop: i ? "1px solid var(--line)" : "none", fontSize: 13 }}>
                     <div style={{ fontWeight: 600 }}>{e.entity} <span className="mono" style={{ color: "var(--purple)", fontWeight: 400, fontSize: 12 }}>· {e.source}</span></div>
@@ -228,6 +262,7 @@ export default function AuthorityPage() {
           {map.rankingSignalTransition?.length ? (
             <div className="card" style={{ marginTop: 20 }}>
               <div className="card-hd"><h3>Ranking signal transition</h3><span className="muted" style={{ fontSize: 12 }}>publish in this order to build authority</span></div>
+              <p className="muted" style={{ fontSize: 12.5, margin: "0 0 12px", lineHeight: 1.5 }}>Order matters. Publishing in these phases tells search engines you cover the topic completely before you chase competitive terms — that&apos;s how coverage turns into rankings.</p>
               <div style={{ display: "grid", gap: 12, marginTop: 4 }}>
                 {map.rankingSignalTransition.map((p, i) => (
                   <div key={i} style={{ display: "flex", gap: 12, alignItems: "baseline" }}>
@@ -245,6 +280,7 @@ export default function AuthorityPage() {
           {map.pruning?.length ? (
             <div className="card" style={{ marginTop: 16 }}>
               <div className="card-hd"><h3>Content pruning</h3><span className="muted" style={{ fontSize: 12 }}>from your existing site</span></div>
+              <p className="muted" style={{ fontSize: 12.5, margin: "0 0 10px", lineHeight: 1.5 }}>Weak or overlapping pages already on your site drag the whole topic down. <strong>Prune</strong> = remove, <strong>merge</strong> = combine, <strong>update</strong> = refresh.</p>
               {map.pruning.map((p, i) => (
                 <div key={i} style={{ display: "flex", gap: 10, alignItems: "baseline", padding: "9px 0", borderTop: i ? "1px solid var(--line)" : "none", flexWrap: "wrap" }}>
                   <span className={"badge " + (p.action === "prune" ? "b-high" : p.action === "merge" ? "b-med" : "b-low")}>{p.action}</span>
