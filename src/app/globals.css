@@ -1,13 +1,13 @@
 /* ─────────────────────────────────────────────────────────
-   SEO Studio — design system (Auralis-minimal)
-   warm off-white canvas · near-black Manrope · hairline borders
-   no shadows · black pill buttons · purple accent
+   SEO Studio — design system
+   pale butter-yellow canvas · near-black Manrope · hairline borders
+   no shadows · black pill buttons · coral accent
    ───────────────────────────────────────────────────────── */
 
 :root {
-  --canvas: #f5f4ef;
-  --nav: #fbfaf3;
-  --rail: #f0eee6;
+  --canvas: #faf3c7;
+  --nav: #fdf9dd;
+  --rail: #f4ecba;
   --surface: #ffffff;
   --ink: #161512;
   --soft: #6e6e66;
@@ -15,8 +15,8 @@
   --line: #e7e5de;
   --line-strong: #d9d7cd;
   --black: #141414;
-  --purple: #503aa8;
-  --purple-soft: #ede9f7;
+  --purple: #dc5334;
+  --purple-soft: #fbe6dd;
   --yellow: #ffee58;
   --pink: #f6cff4;
 
