@@ -12,7 +12,7 @@ export async function generate(opts: {
   json?: boolean;
   search?: boolean;
 }): Promise<string> {
-  const key = process.env.GEMINI_API_KEY;
+  const key = process.env.GEMINI_API_KEY || process.env.GeminiKey;
   if (!key) {
     throw new Error(
       "GEMINI_API_KEY is not set. Get a free key at https://aistudio.google.com/apikey and add it to .env.local."
