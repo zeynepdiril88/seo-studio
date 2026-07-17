@@ -13,11 +13,12 @@ You may also receive:
 
 Rules:
 - Central Search Intent = Source Context + Central Entity unified.
-- TAXONOMY: specific-concept hierarchy. Pillars = macro-contexts; Clusters = subtopics; Support = long-tail queries. NEVER generic buckets ("Tips","Blog","Health").
+- TAXONOMY: specific-concept hierarchy, COMPREHENSIVE — cover the whole domain, not a thin sample. Pillars = macro-contexts (each a potential pillar page / hub); Clusters = subtopics that orbit a pillar; Support = long-tail queries. Go WIDE (many pillars) and DEEP (many clusters per pillar, many queries per cluster). NEVER generic buckets ("Tips","Blog","Health").
+- HARD STRUCTURAL REQUIREMENT: EVERY pillar MUST contain 3-5 clusters — never 1 or 2. EVERY cluster MUST contain 3-4 support queries. A pillar with a single cluster, or a cluster with a single query, is an INCOMPLETE map — expand it before returning. Depth is as important as breadth.
 - Every support node is a real QUERY, tagged queryType (Definition/Problem/Solution/Comparison/Beginner) and covered (boolean).
-- ONTOLOGY: relationships — relation ∈ affects, regulated-through, part-of, connected-with, causes, measured-by.
+- ONTOLOGY: a dense semantic web of entity relationships that connects entities ACROSS pillars (not siloed per pillar) — relation ∈ affects, regulated-through, part-of, connected-with, causes, measured-by. Every pillar entity should appear in at least one edge.
 - GAPS: coverage (missing topics), depth (go deeper), experience (frameworks/exercises/original methodology).
-- INTERNAL LINKS: support → cluster → pillar; anchor = descriptive entity phrase, never "click here".
+- INTERNAL LINKS: build the HUB-AND-SPOKE structure — every cluster links UP to its pillar page (the hub); ADD lateral links between semantically adjacent clusters/queries across different pillars (shared entity). anchor = descriptive entity phrase, never "click here". HARD MINIMUM: produce at least one internal link per cluster PLUS several lateral links — so internalLinks length is at least the number of clusters. Aim for a densely connected graph, not a sparse list.
 - QUALITY NODES: 1-3 flagship framework pages.
 - RESEARCH SUGGESTIONS: for the GAPS, propose keywords + the search intent behind each, to research next.
 - ENTITY REINFORCEMENT (Knowledge Graph): for the central entity and the pillars, name the authoritative EXTERNAL entities to cite / link / sameAs — Wikipedia, Wikidata, official bodies, .gov / .edu, recognized named experts — that corroborate the topic and connect the site to the knowledge graph. source = the concrete reference; why = the signal it sends.
@@ -39,7 +40,7 @@ Return STRICT JSON only (no prose, no fences), EXACTLY:
   "rankingSignalTransition": [ { "phase": string, "publish": string, "why": string } ],
   "pruning": [ { "page": string, "action": "prune"|"merge"|"update", "why": string } ]
 }
-Produce 3-5 pillars, 2-4 clusters each, 2-3 support each; 8-14 ontology edges; 3-5 per gap type; 4-8 researchSuggestions; 6-10 internal links; 1-3 quality nodes; 4-8 entityReinforcement; 3-5 rankingSignalTransition phases; 0-6 pruning items (empty array if no site content).`;
+Produce 5-7 pillars; EACH pillar 3-5 clusters; EACH cluster 3-4 support queries — this must total ~18-30 clusters and ~60-100 support queries across the whole map (a shallow tree is a failure). Then: 14-24 ontology edges; 3-5 per gap type; 5-8 researchSuggestions; 15-25 internal links (hub-and-spoke + lateral); 2-3 quality nodes; 5-8 entityReinforcement; 3-5 rankingSignalTransition phases; 0-6 pruning items (empty array if no site content). Be comprehensive — a real topical map is wide AND deep.`;
 
 function normalizeUrl(raw: string): string {
   let u = raw.trim();
@@ -92,7 +93,7 @@ export async function POST(req: Request) {
     const text = await generate({
       system: SYSTEM,
       temperature: 0.5,
-      maxTokens: 8192,
+      maxTokens: 24000,
       messages: [{ role: "user", content: parts.join("\n") }],
     });
     return NextResponse.json(extractJson(text));
