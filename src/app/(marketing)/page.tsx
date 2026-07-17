@@ -58,7 +58,7 @@ export default function Landing() {
             ["02", "Authority", "Build an editable topical map — pillars, clusters, ontology and gaps — to own the whole topic."],
             ["03", "Create", "Authority-building content writing — engineered to rank on Google and get cited in AI search."],
           ].map(([n, t, d]) => (
-            <div key={n} className="card" style={{ padding: 22 }}>
+            <div key={n} className="card lift" style={{ padding: 22 }}>
               <span className="mono muted" style={{ fontSize: 13 }}>{n}</span>
               <h3 style={{ fontSize: 20, fontWeight: 700, margin: "10px 0 8px" }}>{t}</h3>
               <p className="muted" style={{ fontSize: 14 }}>{d}</p>
@@ -78,7 +78,7 @@ export default function Landing() {
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16, marginTop: 30 }}>
           {MODULES.map((m) => (
-            <Link key={m.href} href={m.href} className="card" style={{ display: "block", transition: "border-color .18s ease" }}>
+            <Link key={m.href} href={m.href} className="card lift" style={{ display: "block" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <span style={{ width: 38, height: 38, borderRadius: 10, background: "var(--purple-soft)", color: "var(--purple)", display: "grid", placeItems: "center" }}>
                   <Icon name={m.icon} size={19} />
@@ -88,7 +88,7 @@ export default function Landing() {
               <h3 style={{ fontSize: 17, fontWeight: 700, margin: "16px 0 8px" }}>{m.name}</h3>
               <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.5 }}>{m.blurb}</p>
               <span className="accent" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--purple)", fontSize: 13, fontWeight: 600, marginTop: 14 }}>
-                Open <Icon name="arrow" size={15} />
+                Open <span className="arrow-nudge" style={{ display: "inline-flex" }}><Icon name="arrow" size={15} /></span>
               </span>
             </Link>
           ))}
@@ -113,7 +113,7 @@ export default function Landing() {
               ["Corroboration", "Wikipedia, press, .edu/.gov"],
               ["Content quality", "1 citable claim per H2"],
             ].map(([t, d], i) => (
-              <div key={t} className="card" style={{ padding: 16 }}>
+              <div key={t} className="card lift" style={{ padding: 16 }}>
                 <span className="mono muted" style={{ fontSize: 12 }}>{`0${i + 1}`}</span>
                 <h4 style={{ fontSize: 15, fontWeight: 700, margin: "8px 0 6px" }}>{t}</h4>
                 <p className="muted" style={{ fontSize: 12.5 }}>{d}</p>
@@ -130,11 +130,11 @@ export default function Landing() {
         <p className="muted" style={{ fontSize: 16, marginTop: 12, maxWidth: 560 }}>Card required · limited credits to try · cancel anytime within 7 days.</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16, marginTop: 30 }}>
           {[
-            { name: "Starter", price: 19, credits: "100 credits · ~14 articles / mo", feats: ["1 project", "All modules", "Gemini-powered"], pro: false },
+            { name: "Starter", price: 19, credits: "100 credits · ~14 articles / mo", feats: ["1 project", "All modules", "AI-powered"], pro: false },
             { name: "Pro", price: 49, credits: "400 credits · ~55 articles / mo", feats: ["5 projects", "Priority generation", "Everything in Starter"], pro: true },
             { name: "Agency", price: 99, credits: "1,200 credits · ~170 articles / mo", feats: ["Unlimited clients", "Multi-client workspace", "Everything in Pro"], pro: false },
           ].map((p) => (
-            <div key={p.name} className="card" style={{ padding: 24, borderColor: p.pro ? "var(--purple)" : "var(--line)" }}>
+            <div key={p.name} className="card lift" style={{ padding: 24, borderColor: p.pro ? "var(--purple)" : "var(--line)" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <span className={p.pro ? "eyebrow accent" : "eyebrow"}>{p.name}</span>
                 {p.pro && <span className="badge med">Popular</span>}
