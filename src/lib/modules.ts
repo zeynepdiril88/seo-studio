@@ -48,15 +48,6 @@ export const MODULES: AppModule[] = [
     icon: "layers",
   },
   {
-    name: "Content Distribution",
-    short: "Distribution",
-    href: "/distribution",
-    blurb: "The right channel mix — article, Reddit, Quora, YouTube, LinkedIn — to boost SEO + GEO.",
-    status: "soon",
-    group: "Research",
-    icon: "send",
-  },
-  {
     name: "Content Writing",
     short: "Write",
     href: "/write",

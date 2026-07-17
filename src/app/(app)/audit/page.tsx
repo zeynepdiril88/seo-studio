@@ -3,43 +3,43 @@
 import { useState } from "react";
 import { Icon } from "@/components/Icon";
 
-type Status = "pass" | "warn" | "fail";
-type Check = { label: string; status: Status; detail: string };
-type Fix = { title: string; severity: "critical" | "high" | "medium" | "low"; impact: string; detail: string };
+type Sev = "critical" | "high" | "medium" | "low";
+type FixItem = { label: string; severity: Sev; pagesAffected: number; potential: number; detail: string };
+type TopPage = { url: string; title: string; authority: number; inLinks: number; outLinks: number; depth: number };
+type Issue = { url: string; type: string; label: string; severity: Sev; detail: string };
 type Result = {
   site: string;
-  scores: { seo: number; geo: number; aeo: number; overall: number };
+  host: string;
+  pagesAudited: number;
+  overall: number;
   healthLabel: string;
+  aiVisibility: number;
+  criticalCount: number;
+  totalIssues: number;
   summary: string;
-  meta: Check[];
-  schema: { present: string[]; missing: string[] };
-  geoChecks: Check[];
-  aeoChecks: Check[];
-  fixes: Fix[];
+  fixPack: FixItem[];
+  linkAuthority: {
+    avgAuthority: number;
+    orphanCount: number;
+    deadEndCount: number;
+    deepCount: number;
+    topPages: TopPage[];
+    orphanPages: string[];
+    deadEndPages: string[];
+  };
+  issues: Issue[];
 };
 
-const SEV_CLASS: Record<Fix["severity"], string> = { critical: "crit", high: "high", medium: "med", low: "low" };
+const SEV_CLASS: Record<Sev, string> = { critical: "crit", high: "high", medium: "med", low: "low" };
+const SEV_ORDER: Sev[] = ["critical", "high", "medium", "low"];
 
-function Dot({ status }: { status: Status }) {
-  const c = status === "pass" ? "var(--purple)" : status === "warn" ? "#c9a400" : "#c0472f";
-  return <span style={{ width: 8, height: 8, borderRadius: 999, background: c, flexShrink: 0 }} />;
-}
-
-function CheckList({ title, items }: { title: string; items: Check[] }) {
-  return (
-    <div className="card">
-      <div className="card-hd"><h3>{title}</h3></div>
-      {items.map((c, i) => (
-        <div key={i} style={{ display: "flex", gap: 10, padding: "10px 0", borderTop: i ? "1px solid var(--line)" : "none" }}>
-          <span style={{ paddingTop: 5 }}><Dot status={c.status} /></span>
-          <div>
-            <div style={{ fontWeight: 600, fontSize: 13.5 }}>{c.label}</div>
-            <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>{c.detail}</div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+function path(u: string): string {
+  try {
+    const x = new URL(u);
+    return x.pathname === "/" ? "/ (home)" : x.pathname;
+  } catch {
+    return u;
+  }
 }
 
 export default function AuditPage() {
@@ -70,13 +70,17 @@ export default function AuditPage() {
     }
   }
 
+  const grouped = result
+    ? SEV_ORDER.map((s) => ({ sev: s, items: result.issues.filter((i) => i.severity === s) })).filter((g) => g.items.length)
+    : [];
+
   return (
     <div style={{ maxWidth: 1080, margin: "0 auto", padding: "30px 36px 60px" }}>
       <p className="eyebrow accent">Site &amp; Technical Audit</p>
-      <h1 className="h-display" style={{ fontSize: 30, marginTop: 8 }}>Audit any site for SEO, GEO &amp; AEO</h1>
+      <h1 className="h-display" style={{ fontSize: 30, marginTop: 8 }}>Full-site SEO, GEO &amp; AEO audit</h1>
       <p className="muted" style={{ fontSize: 14.5, marginTop: 8, maxWidth: 640 }}>
-        Paste a URL. Claude fetches the page and scores it across search, generative-engine and answer-engine
-        readiness — with a prioritized fix list.
+        Paste a URL. We crawl the site, map its internal-link authority, and score every page across search,
+        generative-engine and answer-engine readiness — grouped into a prioritized fix pack.
       </p>
 
       <form onSubmit={run} style={{ display: "flex", gap: 10, marginTop: 22 }}>
@@ -90,7 +94,7 @@ export default function AuditPage() {
           spellCheck={false}
         />
         <button className="btn" disabled={loading} style={{ flexShrink: 0 }}>
-          {loading ? <><span className="spin" /> Auditing…</> : <>Run audit <span className="sub">1 credit</span></>}
+          {loading ? <><span className="spin" /> Crawling…</> : <>Run audit <span className="sub">1 credit</span></>}
         </button>
       </form>
 
@@ -102,73 +106,137 @@ export default function AuditPage() {
 
       {loading && !result && (
         <p className="muted" style={{ marginTop: 20, fontSize: 14 }}>
-          Fetching the page and running the 5-pillar GEO analysis — this takes ~20–40 seconds.
+          Crawling up to 18 pages, building the link graph and scoring each page — this takes ~30–50 seconds.
         </p>
       )}
 
       {result && (
         <div className="reveal" style={{ marginTop: 30 }}>
-          {/* scores */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+          {/* top stat row */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
             <div className="tile" style={{ borderColor: "var(--purple)", background: "var(--purple-soft)" }}>
-              <div className="label">Overall</div>
-              <div className="value" style={{ color: "var(--purple)" }}>{result.scores.overall}</div>
+              <div className="label">Overall score</div>
+              <div className="value" style={{ color: "var(--purple)" }}>{result.overall}</div>
               <div className="meta">{result.healthLabel}</div>
             </div>
-            {(["seo", "geo", "aeo"] as const).map((k) => (
-              <div key={k} className="tile">
-                <div className="label" style={{ textTransform: "uppercase", letterSpacing: ".5px" }}>{k}</div>
-                <div className="value">{result.scores[k]}</div>
-                <div className="meta">out of 100</div>
-              </div>
-            ))}
+            <div className="tile">
+              <div className="label">Pages audited</div>
+              <div className="value">{result.pagesAudited}</div>
+              <div className="meta">crawled</div>
+            </div>
+            <div className="tile">
+              <div className="label">Critical issues</div>
+              <div className="value" style={{ color: result.criticalCount ? "#c0472f" : "var(--ink)" }}>{result.criticalCount}</div>
+              <div className="meta">must fix</div>
+            </div>
+            <div className="tile">
+              <div className="label">Total issues</div>
+              <div className="value">{result.totalIssues}</div>
+              <div className="meta">across all pages</div>
+            </div>
+            <div className="tile">
+              <div className="label">AI visibility</div>
+              <div className="value">{result.aiVisibility}</div>
+              <div className="meta">out of 100</div>
+            </div>
           </div>
 
-          {/* summary */}
+          {/* executive summary */}
           <div className="card" style={{ marginTop: 16 }}>
-            <div className="card-hd"><h3>Executive summary</h3><span className="muted" style={{ fontSize: 12 }}>{result.site}</span></div>
+            <div className="card-hd"><h3>Executive summary</h3><span className="muted" style={{ fontSize: 12 }}>{result.host}</span></div>
             <p style={{ fontSize: 14.5, lineHeight: 1.6, color: "var(--soft)" }}>{result.summary}</p>
           </div>
 
-          {/* checks grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16, marginTop: 16 }}>
-            <CheckList title="Meta & tags" items={result.meta} />
-            <div className="card">
-              <div className="card-hd"><h3>Structured data</h3></div>
-              <div style={{ marginBottom: 12 }}>
-                <div className="eyebrow" style={{ marginBottom: 8 }}>Present</div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {result.schema.present.length ? result.schema.present.map((s) => <span key={s} className="chip">{s}</span>) : <span className="muted" style={{ fontSize: 13 }}>None found</span>}
-                </div>
-              </div>
-              <div>
-                <div className="eyebrow" style={{ marginBottom: 8 }}>Missing</div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {result.schema.missing.map((s) => <span key={s} className="chip ghost">{s}</span>)}
-                </div>
-              </div>
-            </div>
-            <CheckList title="GEO — AI search readiness" items={result.geoChecks} />
-            <CheckList title="AEO — answer engines" items={result.aeoChecks} />
-          </div>
-
-          {/* fixes */}
+          {/* fix pack */}
           <div className="card" style={{ marginTop: 16 }}>
-            <div className="card-hd"><h3>Prioritized fix list</h3><span className="muted" style={{ fontSize: 12 }}>{result.fixes.length} actions</span></div>
-            {result.fixes.map((f, i) => (
-              <div key={i} style={{ display: "flex", gap: 14, padding: "14px 0", borderTop: i ? "1px solid var(--line)" : "none" }}>
-                <span className="mono muted" style={{ fontSize: 13, paddingTop: 2, width: 22 }}>{String(i + 1).padStart(2, "0")}</span>
-                <div style={{ flex: 1 }}>
+            <div className="card-hd">
+              <h3>Fix pack</h3>
+              <span className="muted" style={{ fontSize: 12 }}>{result.fixPack.length} actions · grouped by issue</span>
+            </div>
+            {result.fixPack.map((f, i) => (
+              <div key={i} style={{ display: "flex", gap: 14, alignItems: "baseline", padding: "13px 0", borderTop: i ? "1px solid var(--line)" : "none" }}>
+                <span className="mono muted" style={{ fontSize: 13, width: 22, flexShrink: 0 }}>{String(i + 1).padStart(2, "0")}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                    <span style={{ fontWeight: 600, fontSize: 14.5 }}>{f.title}</span>
+                    <span style={{ fontWeight: 600, fontSize: 14.5 }}>{f.label}</span>
                     <span className={`badge ${SEV_CLASS[f.severity]}`}>{f.severity}</span>
+                    <span className="muted" style={{ fontSize: 12.5 }}>{f.pagesAffected} page{f.pagesAffected === 1 ? "" : "s"} affected</span>
                   </div>
                   <div className="muted" style={{ fontSize: 13.5, marginTop: 4, lineHeight: 1.5 }}>{f.detail}</div>
-                  <div style={{ fontSize: 12.5, color: "var(--purple)", marginTop: 6, fontWeight: 500 }}>Impact: {f.impact}</div>
                 </div>
+                <span className="mono" style={{ fontSize: 12.5, color: "var(--purple)", fontWeight: 600, flexShrink: 0 }}>+{f.potential}</span>
               </div>
             ))}
           </div>
+
+          {/* internal link authority */}
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8, margin: "28px 0 6px" }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700 }}>Internal link authority</h2>
+            <span className="muted" style={{ fontSize: 12.5 }}>PageRank-style analysis of the site&apos;s link graph</span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
+            <div className="tile"><div className="label">Avg authority</div><div className="value">{result.linkAuthority.avgAuthority}</div><div className="meta">of 100</div></div>
+            <div className="tile"><div className="label">Orphan pages</div><div className="value" style={{ color: result.linkAuthority.orphanCount ? "#c0472f" : "var(--ink)" }}>{result.linkAuthority.orphanCount}</div><div className="meta">no links in</div></div>
+            <div className="tile"><div className="label">Dead-end pages</div><div className="value" style={{ color: result.linkAuthority.deadEndCount ? "#c9a400" : "var(--ink)" }}>{result.linkAuthority.deadEndCount}</div><div className="meta">no links out</div></div>
+            <div className="tile"><div className="label">Deep pages</div><div className="value">{result.linkAuthority.deepCount}</div><div className="meta">&gt;3 clicks</div></div>
+          </div>
+
+          <div className="card" style={{ marginTop: 14 }}>
+            <div className="card-hd"><h3>Top authority pages</h3><span className="muted" style={{ fontSize: 12 }}>authority · in / out links · depth</span></div>
+            {result.linkAuthority.topPages.map((p, i) => (
+              <div key={i} style={{ display: "flex", gap: 12, alignItems: "center", padding: "10px 0", borderTop: i ? "1px solid var(--line)" : "none" }}>
+                <span className="mono" style={{ fontSize: 15, fontWeight: 700, color: "var(--purple)", width: 34, flexShrink: 0, textAlign: "right" }}>{p.authority}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, fontSize: 13.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.title}</div>
+                  <div className="mono muted" style={{ fontSize: 11.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{path(p.url)}</div>
+                </div>
+                <span className="mono muted" style={{ fontSize: 12, flexShrink: 0 }}>↓{p.inLinks} ↑{p.outLinks} · d{p.depth}</span>
+              </div>
+            ))}
+          </div>
+
+          {(result.linkAuthority.orphanPages.length || result.linkAuthority.deadEndPages.length) ? (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16, marginTop: 14 }}>
+              {result.linkAuthority.orphanPages.length ? (
+                <div className="card" style={{ borderColor: "#e6c3ba", background: "#fdf4f1" }}>
+                  <div className="card-hd"><h3>Orphan pages</h3><span className="muted" style={{ fontSize: 12 }}>no internal links point here</span></div>
+                  {result.linkAuthority.orphanPages.map((u, i) => (
+                    <div key={i} className="mono" style={{ fontSize: 12, padding: "5px 0", color: "var(--soft)", wordBreak: "break-all" }}>{path(u)}</div>
+                  ))}
+                </div>
+              ) : null}
+              {result.linkAuthority.deadEndPages.length ? (
+                <div className="card" style={{ borderColor: "#e8dcb0", background: "#fdfaef" }}>
+                  <div className="card-hd"><h3>Dead-end pages</h3><span className="muted" style={{ fontSize: 12 }}>no outgoing internal links</span></div>
+                  {result.linkAuthority.deadEndPages.map((u, i) => (
+                    <div key={i} className="mono" style={{ fontSize: 12, padding: "5px 0", color: "var(--soft)", wordBreak: "break-all" }}>{path(u)}</div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {/* issues by severity */}
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8, margin: "28px 0 10px" }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700 }}>Issues by severity</h2>
+            <span className="muted" style={{ fontSize: 12.5 }}>{result.issues.length} shown</span>
+          </div>
+          {grouped.map((g) => (
+            <div key={g.sev} className="card" style={{ marginBottom: 14 }}>
+              <div className="card-hd">
+                <h3 style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span className={`badge ${SEV_CLASS[g.sev]}`}>{g.sev}</span> {g.items.length} issue{g.items.length === 1 ? "" : "s"}
+                </h3>
+              </div>
+              {g.items.map((it, i) => (
+                <div key={i} style={{ padding: "9px 0", borderTop: i ? "1px solid var(--line)" : "none" }}>
+                  <div style={{ fontWeight: 600, fontSize: 13.5 }}>{it.label}</div>
+                  <div className="muted" style={{ fontSize: 13, marginTop: 2, lineHeight: 1.45 }}>{it.detail}</div>
+                  <div className="mono muted" style={{ fontSize: 11.5, marginTop: 3, wordBreak: "break-all" }}>{path(it.url)}</div>
+                </div>
+              ))}
+            </div>
+          ))}
         </div>
       )}
     </div>
