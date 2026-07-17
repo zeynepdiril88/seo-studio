@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { generate } from "@/lib/ai";
+import { generate, extractJson } from "@/lib/ai";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -370,6 +370,27 @@ export async function POST(req: Request) {
     // keep the templated summary
   }
 
+  // Concrete, ready-to-use fixes for the homepage — the tangible "here's what to write" step.
+  let recommendations: { title: string; metaDescription: string; h1: string; faqs: { q: string; a: string }[] } | null = null;
+  try {
+    const homeText = textContent(first.html).slice(0, 3500);
+    const rec = await generate({
+      system:
+        'You are an SEO + GEO copywriter. Given a homepage\'s content, propose concrete, ready-to-paste fixes specific to THIS site (not generic advice). Return STRICT JSON only: { "title": string (50-60 chars), "metaDescription": string (120-160 chars), "h1": string, "faqs": [{ "q": string, "a": string }] } with exactly 3 FAQs. Answers are concise, factual and citable.',
+      temperature: 0.5,
+      maxTokens: 700,
+      messages: [
+        {
+          role: "user",
+          content: `Site: ${host}\nCurrent title: ${entrySig.title || "(none)"}\n\nHomepage content:\n"""\n${homeText}\n"""\n\nReturn the JSON.`,
+        },
+      ],
+    });
+    recommendations = extractJson(rec);
+  } catch {
+    // recommendations are optional
+  }
+
   return NextResponse.json({
     site: origin,
     host,
@@ -380,6 +401,7 @@ export async function POST(req: Request) {
     criticalCount,
     totalIssues,
     summary,
+    recommendations,
     fixPack,
     linkAuthority: {
       avgAuthority,

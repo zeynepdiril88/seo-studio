@@ -17,6 +17,7 @@ type Result = {
   criticalCount: number;
   totalIssues: number;
   summary: string;
+  recommendations: { title: string; metaDescription: string; h1: string; faqs: { q: string; a: string }[] } | null;
   fixPack: FixItem[];
   linkAuthority: {
     avgAuthority: number;
@@ -40,6 +41,22 @@ function path(u: string): string {
   } catch {
     return u;
   }
+}
+
+function PLink({ href, muted }: { href: string; muted?: boolean }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mono"
+      style={{ fontSize: 11.5, color: muted ? "var(--soft)" : "var(--purple)", textDecoration: "none", wordBreak: "break-all" }}
+      onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
+      onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
+    >
+      {path(href)} ↗
+    </a>
+  );
 }
 
 export default function AuditPage() {
@@ -147,6 +164,33 @@ export default function AuditPage() {
             <p style={{ fontSize: 14.5, lineHeight: 1.6, color: "var(--soft)" }}>{result.summary}</p>
           </div>
 
+          {/* recommended fixes — concrete, copy-ready */}
+          {result.recommendations && (
+            <div className="card" style={{ marginTop: 16, borderColor: "var(--purple)" }}>
+              <div className="card-hd"><h3>Recommended fixes for your homepage</h3><span className="muted" style={{ fontSize: 12 }}>ready to paste</span></div>
+              {([["Title tag", result.recommendations.title], ["Meta description", result.recommendations.metaDescription], ["H1 heading", result.recommendations.h1]] as const).map(([label, val], i) => (
+                <div key={label} style={{ padding: "10px 0", borderTop: i ? "1px solid var(--line)" : "none" }}>
+                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10 }}>
+                    <span className="eyebrow accent" style={{ marginBottom: 4 }}>{label}</span>
+                    <button className="mono" onClick={() => navigator.clipboard?.writeText(val)} style={{ fontSize: 11, color: "var(--purple)", fontWeight: 600, flexShrink: 0 }}>Copy</button>
+                  </div>
+                  <div style={{ fontSize: 14, lineHeight: 1.5 }}>{val}</div>
+                </div>
+              ))}
+              {result.recommendations.faqs?.length ? (
+                <div style={{ padding: "10px 0", borderTop: "1px solid var(--line)" }}>
+                  <span className="eyebrow accent" style={{ display: "block", marginBottom: 8 }}>Suggested FAQ (add as FAQPage schema)</span>
+                  {result.recommendations.faqs.map((f, i) => (
+                    <div key={i} style={{ marginBottom: 8 }}>
+                      <div style={{ fontWeight: 600, fontSize: 13.5 }}>{f.q}</div>
+                      <div className="muted" style={{ fontSize: 13, marginTop: 2, lineHeight: 1.45 }}>{f.a}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          )}
+
           {/* fix pack */}
           <div className="card" style={{ marginTop: 16 }}>
             <div className="card-hd">
@@ -188,7 +232,7 @@ export default function AuditPage() {
                 <span className="mono" style={{ fontSize: 15, fontWeight: 700, color: "var(--purple)", width: 34, flexShrink: 0, textAlign: "right" }}>{p.authority}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 600, fontSize: 13.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.title}</div>
-                  <div className="mono muted" style={{ fontSize: 11.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{path(p.url)}</div>
+                  <PLink href={p.url} muted />
                 </div>
                 <span className="mono muted" style={{ fontSize: 12, flexShrink: 0 }}>↓{p.inLinks} ↑{p.outLinks} · d{p.depth}</span>
               </div>
@@ -201,7 +245,7 @@ export default function AuditPage() {
                 <div className="card" style={{ borderColor: "#e6c3ba", background: "#fdf4f1" }}>
                   <div className="card-hd"><h3>Orphan pages</h3><span className="muted" style={{ fontSize: 12 }}>no internal links point here</span></div>
                   {result.linkAuthority.orphanPages.map((u, i) => (
-                    <div key={i} className="mono" style={{ fontSize: 12, padding: "5px 0", color: "var(--soft)", wordBreak: "break-all" }}>{path(u)}</div>
+                    <div key={i} style={{ padding: "5px 0" }}><PLink href={u} /></div>
                   ))}
                 </div>
               ) : null}
@@ -209,7 +253,7 @@ export default function AuditPage() {
                 <div className="card" style={{ borderColor: "#e8dcb0", background: "#fdfaef" }}>
                   <div className="card-hd"><h3>Dead-end pages</h3><span className="muted" style={{ fontSize: 12 }}>no outgoing internal links</span></div>
                   {result.linkAuthority.deadEndPages.map((u, i) => (
-                    <div key={i} className="mono" style={{ fontSize: 12, padding: "5px 0", color: "var(--soft)", wordBreak: "break-all" }}>{path(u)}</div>
+                    <div key={i} style={{ padding: "5px 0" }}><PLink href={u} /></div>
                   ))}
                 </div>
               ) : null}
@@ -232,7 +276,7 @@ export default function AuditPage() {
                 <div key={i} style={{ padding: "9px 0", borderTop: i ? "1px solid var(--line)" : "none" }}>
                   <div style={{ fontWeight: 600, fontSize: 13.5 }}>{it.label}</div>
                   <div className="muted" style={{ fontSize: 13, marginTop: 2, lineHeight: 1.45 }}>{it.detail}</div>
-                  <div className="mono muted" style={{ fontSize: 11.5, marginTop: 3, wordBreak: "break-all" }}>{path(it.url)}</div>
+                  <div style={{ marginTop: 3 }}><PLink href={it.url} muted /></div>
                 </div>
               ))}
             </div>
