@@ -19,7 +19,7 @@ const mono = Fira_Code({
 export const metadata: Metadata = {
   title: "SEO Studio — SEO + GEO content workbench",
   description:
-    "Audit any site for SEO, GEO and AEO, research keywords, and write content that ranks and gets cited by AI. Built on Claude.",
+    "Audit any site for SEO, GEO and AEO, research keywords, and write content that ranks and gets cited by AI.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

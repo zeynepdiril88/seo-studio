@@ -33,7 +33,7 @@ export default function Landing() {
       {/* ── hero ── */}
       <section className="container" style={{ textAlign: "center", padding: "90px 24px 70px" }}>
         <span className="chip" style={{ marginBottom: 26 }}>
-          <Icon name="sparkle" size={14} className="" /> Built on Google Gemini · SEO + GEO + AEO
+          <Icon name="sparkle" size={14} className="" /> AI powered · SEO + GEO + AEO
         </span>
         <h1 className="h-display" style={{ fontSize: "clamp(2.6rem, 6vw, 4.6rem)", maxWidth: 900, margin: "0 auto" }}>
           Content that ranks<br />and gets cited by AI.
@@ -165,7 +165,7 @@ export default function Landing() {
             <span style={{ width: 22, height: 22, borderRadius: 6, background: "var(--black)", color: "#fff", display: "grid", placeItems: "center", fontWeight: 800, fontSize: 12 }}>S</span>
             <strong style={{ fontWeight: 700 }}>SEO Studio</strong>
           </span>
-          <span className="muted" style={{ fontSize: 13 }}>SEO + GEO + AEO workbench · built on Claude</span>
+          <span className="muted" style={{ fontSize: 13 }}>Copyright © 2026 Zeynep Diril</span>
         </div>
       </footer>
     </div>
