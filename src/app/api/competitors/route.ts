@@ -13,7 +13,7 @@ Return STRICT JSON only (no prose, no fences), EXACTLY this shape:
   "market": string,
   "pagesAnalyzed": number,
   "competitors": [
-    { "url": string, "title": string, "format": string, "wordCount": string, "sourceProfile": string, "standout": string, "weakness": string, "skeleton": string[], "sources": string[] }
+    { "url": string, "title": string, "format": string, "wordCount": string, "sourceProfile": string, "standout": string, "weakness": string, "impact": "High"|"Medium"|"Low", "effort": "Low"|"Medium"|"High", "skeleton": string[], "sources": string[] }
   ],
   "commonSkeleton": [ { "block": string, "frequency": string, "detail": string } ],
   "keywordMap": { "core": string[], "secondary": string[], "mechanism": string[], "practice": string[], "application": string[], "questions": string[] },
@@ -25,7 +25,7 @@ Return STRICT JSON only (no prose, no fences), EXACTLY this shape:
 }
 
 Rules:
-- competitors: 6-10 real, well-known sites likely to rank (realistic domain URLs). format = content type (e.g. "Guide + FAQ", "5-step list", "Clinical guide", "Pillar / academic"). wordCount = approx range (e.g. "~2,300"). sourceProfile = what it cites (e.g. "9 sources: Nature, JAMA, NIH"). standout = its strongest feature. weakness = its weakest point. skeleton = its H1/H2/H3 outline (3-6 items). sources = named sources/experts/assets it uses (2-4 items).
+- competitors: EXACTLY 10 — the top 10 blogs/pages that rank ORGANICALLY (ad-free; exclude sponsored, shopping and ad results), in rough ranking order, realistic domain URLs. format = content type (e.g. "Guide + FAQ", "5-step list", "Clinical guide", "Pillar / academic"). wordCount = approx range (e.g. "~2,300"). sourceProfile = what it cites (e.g. "9 sources: Nature, JAMA, NIH"). standout = its strongest feature. weakness = its single weakest point — this is YOUR opening to beat it. impact = how big the opportunity of outranking this page is (High / Medium / Low). effort = how hard it would be to outdo it (Low / Medium / High). skeleton = its H1/H2/H3 outline (3-6 items). sources = named sources/experts/assets it uses (2-4 items).
 - commonSkeleton: 5-7 shared blocks across the pages, each with a frequency like "9/10" and a one-line detail.
 - keywordMap: the semantic space, clustered — core (2-3), secondary (5-8, H2-level), mechanism (science/technical terms), practice (methods/techniques), application (situational long-tail), questions (PAA / featured-snippet questions).
 - gaps: 3-5 content gaps & opportunities (title + detail) — what few or none cover.
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
     const text = await generate({
       system: SYSTEM,
       temperature: 0.5,
-      maxTokens: 8192,
+      maxTokens: 12000,
       messages: [{ role: "user", content: `Query: ${query}\nMarket / region: ${region}\n\nReturn the full JSON competitor content report.` }],
     });
     return NextResponse.json(extractJson(text));

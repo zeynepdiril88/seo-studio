@@ -7,7 +7,7 @@ type Comp = {
   query: string;
   market: string;
   pagesAnalyzed: number;
-  competitors: { url: string; title: string; format: string; wordCount: string; sourceProfile: string; standout: string; weakness: string; skeleton: string[]; sources: string[] }[];
+  competitors: { url: string; title: string; format: string; wordCount: string; sourceProfile: string; standout: string; weakness: string; impact: string; effort: string; skeleton: string[]; sources: string[] }[];
   commonSkeleton: { block: string; frequency: string; detail: string }[];
   keywordMap: { core: string[]; secondary: string[]; mechanism: string[]; practice: string[]; application: string[]; questions: string[] };
   gaps: { title: string; detail: string }[];
@@ -38,6 +38,11 @@ function OppCard({ title, detail, tag }: { title: string; detail: string; tag?: 
       <p className="muted" style={{ fontSize: 13, marginTop: 5, lineHeight: 1.55 }}>{detail}</p>
     </div>
   );
+}
+
+const impactClass = (v: string) => (v === "High" ? "high" : v === "Medium" ? "med" : "low");
+function href(u: string) {
+  return u?.startsWith("http") ? u : "https://" + u;
 }
 
 function Cluster({ label, terms }: { label: string; terms: string[] }) {
@@ -119,32 +124,27 @@ function ReportInner() {
             </p>
           </div>
 
-          <Section n="01" title="Competitor content table" hint="The pages that typically rank organically, by format, depth and source profile — with each one's strongest feature and its weakest point.">
-            <div style={{ overflowX: "auto", border: "1px solid var(--line)", borderRadius: "var(--r)" }}>
-              <table style={{ borderCollapse: "collapse", width: "100%", minWidth: 720, fontSize: 12.5 }}>
-                <thead>
-                  <tr style={{ background: "var(--nav)", textAlign: "left" }}>
-                    {["Site", "Format", "Words", "Sources", "Standout", "Weakness"].map((h) => (
-                      <th key={h} style={{ padding: "10px 12px", fontWeight: 700, borderBottom: "1px solid var(--line)", whiteSpace: "nowrap" }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.competitors.map((c, i) => (
-                    <tr key={i} style={{ borderTop: i ? "1px solid var(--line)" : "none", verticalAlign: "top" }}>
-                      <td style={{ padding: "10px 12px", minWidth: 130 }}>
-                        <div style={{ fontWeight: 700 }}>{c.title}</div>
-                        <div className="mono muted" style={{ fontSize: 11 }}>{c.url}</div>
-                      </td>
-                      <td style={{ padding: "10px 12px" }}><span className="badge low">{c.format}</span></td>
-                      <td style={{ padding: "10px 12px", whiteSpace: "nowrap" }} className="mono">{c.wordCount}</td>
-                      <td style={{ padding: "10px 12px", minWidth: 140 }} className="muted">{c.sourceProfile}</td>
-                      <td style={{ padding: "10px 12px", minWidth: 150 }}>{c.standout}</td>
-                      <td style={{ padding: "10px 12px", minWidth: 150, color: "#a13a26" }}>{c.weakness}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <Section n="01" title="Top 10 organic competitors — and how to beat each" hint="The blogs ranking organically (ad-free) for this query, in order. Each shows the opening to beat it — its weakness — plus how big the opportunity is and the effort it takes.">
+            <div style={{ display: "grid", gap: 12 }}>
+              {data.competitors.map((c, i) => (
+                <div key={i} className="card" style={{ padding: 18 }}>
+                  <div style={{ display: "flex", gap: 12, alignItems: "baseline" }}>
+                    <span className="mono" style={{ color: "var(--purple)", fontWeight: 700, fontSize: 13, flexShrink: 0, width: 24 }}>{String(i + 1).padStart(2, "0")}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 6 }}>
+                        {c.impact ? <span className={`badge ${impactClass(c.impact)}`}>{c.impact} impact</span> : null}
+                        {c.effort ? <span className="badge low">{c.effort} effort</span> : null}
+                        <span className="badge low">{c.format}</span>
+                        <span className="mono muted" style={{ fontSize: 11.5 }}>{c.wordCount}</span>
+                      </div>
+                      <div style={{ fontWeight: 700, fontSize: 15 }}>{c.title}</div>
+                      <a href={href(c.url)} target="_blank" rel="noopener noreferrer" className="mono" style={{ fontSize: 11.5, color: "var(--purple)", textDecoration: "none", wordBreak: "break-all" }}>{c.url} ↗</a>
+                      <p style={{ fontSize: 13.5, marginTop: 8, lineHeight: 1.5 }}><strong style={{ color: "var(--purple)" }}>Opportunity to beat it:</strong> <span className="muted">{c.weakness}</span></p>
+                      <p className="muted" style={{ fontSize: 13, marginTop: 4, lineHeight: 1.5 }}><strong style={{ color: "var(--ink)" }}>Standout:</strong> {c.standout} &nbsp;·&nbsp; <strong style={{ color: "var(--ink)" }}>Sources:</strong> {c.sourceProfile}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </Section>
 
