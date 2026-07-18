@@ -9,7 +9,7 @@ export type SchemaOutline = {
 
 // Build copy-ready JSON-LD entity schema: an Article that declares its main entity (about) and
 // related entities (mentions), an author Person (E-E-A-T), plus a FAQPage.
-export function buildSchema(o: SchemaOutline): string {
+export function buildSchema(o: SchemaOutline, authorName?: string): string {
   const today = new Date().toISOString().slice(0, 10);
   const entities = [o.mainEntity, ...(o.relatedEntities || [])].filter(Boolean);
   const graph: Record<string, unknown>[] = [
@@ -18,10 +18,10 @@ export function buildSchema(o: SchemaOutline): string {
       headline: o.title,
       description: o.userIntent,
       about: { "@type": "Thing", name: o.mainEntity },
-      mentions: (o.relatedEntities || []).map((e) => ({ "@type": "Thing", name: e })),
+      mentions: (o.relatedEntities || []).filter(Boolean).map((e) => ({ "@type": "Thing", name: e })),
       author: {
         "@type": "Person",
-        name: "Author Name",
+        name: authorName?.trim() || "Author Name",
         ...(o.eeatSignals?.expertise ? { description: o.eeatSignals.expertise } : {}),
         knowsAbout: entities,
       },
@@ -29,10 +29,11 @@ export function buildSchema(o: SchemaOutline): string {
       dateModified: today,
     },
   ];
-  if (o.faq?.length) {
+  const faqs = (o.faq || []).filter((f) => f.q?.trim());
+  if (faqs.length) {
     graph.push({
       "@type": "FAQPage",
-      mainEntity: o.faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
+      mainEntity: faqs.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
     });
   }
   const json = JSON.stringify({ "@context": "https://schema.org", "@graph": graph }, null, 2);
