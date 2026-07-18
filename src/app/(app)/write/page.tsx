@@ -134,7 +134,6 @@ function WriteInner() {
               </div>
             ) : null}
             <p className="muted" style={{ fontSize: 13.5, marginTop: 14, lineHeight: 1.6 }}><strong style={{ color: "var(--ink)" }}>Intent:</strong> {outline.userIntent}</p>
-            {outline.strategy && <p className="muted" style={{ fontSize: 13.5, marginTop: 6, lineHeight: 1.6 }}><strong style={{ color: "var(--ink)" }}>Strategy:</strong> {outline.strategy}</p>}
           </div>
 
           {/* sections */}
