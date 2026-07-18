@@ -56,4 +56,13 @@ export const MODULES: AppModule[] = [
     group: "Content",
     icon: "pen",
   },
+  {
+    name: "Opportunity Report",
+    short: "Report",
+    href: "/reports",
+    blurb: "A SERP content report for any query — competitor gaps, EEAT & AI-search opportunities to capture.",
+    status: "live",
+    group: "Intelligence",
+    icon: "chart",
+  },
 ];
