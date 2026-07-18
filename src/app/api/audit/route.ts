@@ -222,13 +222,36 @@ export async function POST(req: Request) {
 
   const N = pages.length;
   const urlSet = new Set(pages.map((p) => p.url));
-  const inLinks = new Map<string, Set<string>>();
-  const outWithin = new Map<string, string[]>();
-  pages.forEach((p) => inLinks.set(p.url, new Set()));
+
+  // Detect site-wide navigation/footer links: a target linked from ≥75% of crawled pages is
+  // boilerplate (the repeated menu/footer), not an editorial link. Excluding it keeps the
+  // authority graph honest — otherwise every nav-menu page looks like a top page.
+  const linkFreq = new Map<string, number>();
+  for (const p of pages) for (const l of new Set(p.outLinks)) linkFreq.set(l, (linkFreq.get(l) || 0) + 1);
+  const boilerplate = new Set<string>();
+  if (N >= 6) {
+    const threshold = Math.ceil(N * 0.75);
+    for (const [l, c] of linkFreq) if (c >= threshold) boilerplate.add(l);
+  }
+
+  const inLinks = new Map<string, Set<string>>(); // full graph incl. nav — for orphan detection
+  const editInLinks = new Map<string, Set<string>>(); // editorial graph (nav excluded) — for authority
+  const fullWithin = new Map<string, string[]>(); // full out-links to crawled pages — for click-depth
+  const outWithin = new Map<string, string[]>(); // editorial out-links to crawled pages — for PageRank
+  const editOutCount = new Map<string, number>(); // editorial out-links to any internal page — for dead-ends
+  pages.forEach((p) => {
+    inLinks.set(p.url, new Set());
+    editInLinks.set(p.url, new Set());
+  });
   for (const p of pages) {
-    const outs = [...new Set(p.outLinks.filter((l) => urlSet.has(l) && l !== p.url))];
-    outWithin.set(p.url, outs);
-    for (const l of outs) inLinks.get(l)!.add(p.url);
+    const editOut = [...new Set(p.outLinks.filter((l) => !boilerplate.has(l) && l !== p.url))];
+    editOutCount.set(p.url, editOut.length);
+    const fullCrawled = [...new Set(p.outLinks.filter((l) => urlSet.has(l) && l !== p.url))];
+    const editCrawled = editOut.filter((l) => urlSet.has(l));
+    fullWithin.set(p.url, fullCrawled);
+    outWithin.set(p.url, editCrawled);
+    for (const l of fullCrawled) inLinks.get(l)!.add(p.url);
+    for (const l of editCrawled) editInLinks.get(l)!.add(p.url);
   }
 
   // simplified PageRank for internal link authority
@@ -252,13 +275,13 @@ export async function POST(req: Request) {
   const maxRank = Math.max(...rank.values(), 1e-9);
   const authorityOf = (u: string) => Math.round((rank.get(u)! / maxRank) * 100);
 
-  // Click-depth from the homepage over the crawled link graph (BFS).
+  // Click-depth from the homepage over the FULL link graph (nav links are clickable too).
   const depthOf = new Map<string, number>([[entryUrl, 0]]);
   const dq = [entryUrl];
   while (dq.length) {
     const u = dq.shift()!;
     const du = depthOf.get(u)!;
-    for (const o of outWithin.get(u) || []) {
+    for (const o of fullWithin.get(u) || []) {
       if (!depthOf.has(o)) {
         depthOf.set(o, du + 1);
         dq.push(o);
@@ -267,10 +290,10 @@ export async function POST(req: Request) {
   }
   pages.forEach((p) => (p.depth = depthOf.get(p.url) ?? 99));
 
-  // Orphans: crawled pages that no other crawled page links to.
+  // Orphans: pages nothing links to at all (incl. nav) — truly undiscoverable.
   const orphanPages = pages.filter((p) => p.url !== entryUrl && inLinks.get(p.url)!.size === 0).map((p) => p.url);
-  // Dead-ends: crawled pages with no outgoing internal links at all.
-  const deadEndPages = pages.filter((p) => p.outLinks.length === 0).map((p) => p.url);
+  // Dead-ends: pages whose only outgoing links are the nav/footer — no editorial links out.
+  const deadEndPages = pages.filter((p) => (editOutCount.get(p.url) || 0) === 0).map((p) => p.url);
   // Deep: reachable but more than 3 clicks from the homepage.
   const deepPages = pages.filter((p) => p.depth > 3 && p.depth < 99);
   const avgAuthority = Math.round(pages.reduce((a, p) => a + authorityOf(p.url), 0) / N);
@@ -346,7 +369,7 @@ export async function POST(req: Request) {
   const topPages = [...pages]
     .sort((a, b) => authorityOf(b.url) - authorityOf(a.url))
     .slice(0, 5)
-    .map((p) => ({ url: p.url, title: p.title || p.url, authority: authorityOf(p.url), inLinks: inLinks.get(p.url)!.size, outLinks: outWithin.get(p.url)!.length, depth: p.depth }));
+    .map((p) => ({ url: p.url, title: p.title || p.url, authority: authorityOf(p.url), inLinks: editInLinks.get(p.url)!.size, outLinks: outWithin.get(p.url)!.length, depth: p.depth }));
 
   const healthLabel = overall >= 75 ? "Healthy" : overall >= 50 ? "Needs Improvement" : "Poor";
 
