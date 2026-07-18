@@ -56,13 +56,4 @@ export const MODULES: AppModule[] = [
     group: "Content",
     icon: "pen",
   },
-  {
-    name: "Reports & Diagnostics",
-    short: "Reports",
-    href: "/reports",
-    blurb: "Performance by page, query and channel — plus AI-visibility tracking across engines.",
-    status: "soon",
-    group: "Intelligence",
-    icon: "chart",
-  },
 ];
