@@ -52,6 +52,19 @@ function buildSchema(o: Outline): string {
   return `<script type="application/ld+json">\n${json}\n</script>`;
 }
 
+function EditText({ value, onChange, style, placeholder }: { value: string; onChange: (v: string) => void; style?: React.CSSProperties; placeholder?: string }) {
+  return (
+    <input
+      value={value ?? ""}
+      placeholder={placeholder}
+      onChange={(e) => onChange(e.target.value)}
+      style={{ background: "transparent", border: "1px solid transparent", borderRadius: 6, padding: "3px 7px", font: "inherit", color: "inherit", width: "100%", ...style }}
+      onFocus={(e) => { e.currentTarget.style.borderColor = "var(--purple)"; e.currentTarget.style.background = "var(--surface)"; }}
+      onBlur={(e) => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.background = "transparent"; }}
+    />
+  );
+}
+
 function WriteInner() {
   const sp = useSearchParams();
   const [query, setQuery] = useState("");
@@ -61,6 +74,11 @@ function WriteInner() {
   const [draft, setDraft] = useState("");
   const [drafting, setDrafting] = useState(false);
   const [draftError, setDraftError] = useState("");
+  const [instructions, setInstructions] = useState("");
+
+  function mutate(fn: (o: Outline) => void) {
+    setOutline((prev) => { if (!prev) return prev; const o = structuredClone(prev); fn(o); return o; });
+  }
 
   useEffect(() => {
     const q = sp.get("q");
@@ -94,7 +112,7 @@ function WriteInner() {
       const res = await fetch("/api/draft", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ outline }),
+        body: JSON.stringify({ outline, instructions }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed.");
@@ -129,10 +147,10 @@ function WriteInner() {
         <div className="reveal" style={{ marginTop: 28 }}>
           <div className="card">
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
-              <span className="eyebrow accent">Working title (H1)</span>
+              <span className="eyebrow accent">Working title (H1) · click to edit</span>
               {outline.isQualityNode && <span className="badge b-med">Quality node</span>}
             </div>
-            <h2 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.4px" }}>{outline.title}</h2>
+            <EditText value={outline.title} onChange={(v) => mutate((o) => { o.title = v; })} style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.4px", marginLeft: -7 }} />
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 14 }}>
               <span className="chip">Main entity: {outline.mainEntity}</span>
               <span className="chip ghost">{outline.funnelStage}</span>
@@ -154,9 +172,10 @@ function WriteInner() {
           <div style={{ marginTop: 16 }}>
             {outline.sections.map((s, i) => (
               <div key={i} className="card" style={{ marginBottom: 12 }}>
-                <div style={{ display: "flex", gap: 10, alignItems: "baseline" }}>
-                  <span className="mono muted" style={{ fontSize: 13 }}>H2</span>
-                  <h3 style={{ fontSize: 17, fontWeight: 700 }}>{s.h2}</h3>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <span className="mono muted" style={{ fontSize: 13, flexShrink: 0 }}>H2</span>
+                  <EditText value={s.h2} onChange={(v) => mutate((o) => { o.sections[i].h2 = v; })} style={{ fontSize: 17, fontWeight: 700 }} />
+                  <button onClick={() => mutate((o) => { o.sections.splice(i, 1); })} title="Remove section" style={{ color: "var(--mute)", fontSize: 17, padding: "0 4px", flexShrink: 0 }}>×</button>
                 </div>
                 {s.directAnswer && (
                   <div style={{ marginTop: 10, padding: "10px 12px", background: "var(--purple-soft)", borderRadius: 8, fontSize: 13.5, lineHeight: 1.5 }}>
@@ -164,11 +183,17 @@ function WriteInner() {
                     {s.directAnswer}
                   </div>
                 )}
-                {s.keyPoints?.length ? (
-                  <ul style={{ margin: "12px 0 0", paddingLeft: 18 }}>
-                    {s.keyPoints.map((k, j) => <li key={j} style={{ fontSize: 13.5, marginBottom: 4, lineHeight: 1.5 }}>{k}</li>)}
-                  </ul>
-                ) : null}
+                <div style={{ marginTop: 12 }}>
+                  <div className="eyebrow" style={{ marginBottom: 4 }}>Key aspects</div>
+                  {(s.keyPoints ?? []).map((k, j) => (
+                    <div key={j} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <span className="mono muted" style={{ fontSize: 13, flexShrink: 0 }}>•</span>
+                      <EditText value={k} onChange={(v) => mutate((o) => { o.sections[i].keyPoints[j] = v; })} style={{ fontSize: 13.5 }} />
+                      <button onClick={() => mutate((o) => { o.sections[i].keyPoints.splice(j, 1); })} title="Remove" style={{ color: "var(--mute)", fontSize: 15, padding: "0 4px", flexShrink: 0 }}>×</button>
+                    </div>
+                  ))}
+                  <button onClick={() => mutate((o) => { o.sections[i].keyPoints = [...(o.sections[i].keyPoints ?? []), "New key aspect"]; })} style={{ color: "var(--purple)", fontSize: 12.5, fontWeight: 600, marginTop: 2 }}>+ key aspect</button>
+                </div>
                 {s.subsections?.length ? (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
                     {s.subsections.map((h3, j) => <span key={j} className="chip ghost"><span className="mono" style={{ fontSize: 10 }}>H3</span> {h3}</span>)}
@@ -176,6 +201,7 @@ function WriteInner() {
                 ) : null}
               </div>
             ))}
+            <button onClick={() => mutate((o) => { o.sections.push({ h2: "New section", directAnswer: "", keyPoints: [], subsections: [], entities: [] }); })} className="btn-outline" style={{ justifyContent: "center", width: "100%" }}>+ Add H2 section</button>
           </div>
 
           {/* links + refs */}
@@ -244,11 +270,22 @@ function WriteInner() {
             <pre style={{ overflowX: "auto", background: "var(--nav)", border: "1px solid var(--line)", borderRadius: 10, padding: 14, fontSize: 12, lineHeight: 1.5, fontFamily: "var(--mono)", margin: 0 }}>{buildSchema(outline)}</pre>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 20, flexWrap: "wrap" }}>
-            <button className="btn" onClick={genDraft} disabled={drafting}>
-              {drafting ? <><span className="spin" /> Writing…</> : <>Write full draft <span className="sub">3 credits</span></>}
-            </button>
-            <span className="muted" style={{ fontSize: 13 }}>Generate the full article from this outline.</span>
+          <div className="card" style={{ marginTop: 20, borderColor: "var(--purple)" }}>
+            <label className="eyebrow accent" style={{ display: "block", marginBottom: 8 }}>Instructions for the writer (optional)</label>
+            <textarea
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
+              placeholder="Tell the writer how to write it — e.g. ~1500 words · more conversational · lead with a real example · keep the H1 I set above · add a comparison table"
+              rows={2}
+              className="field"
+              style={{ resize: "vertical", fontFamily: "inherit", lineHeight: 1.5 }}
+            />
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 12, flexWrap: "wrap" }}>
+              <button className="btn" onClick={genDraft} disabled={drafting}>
+                {drafting ? <><span className="spin" /> Writing…</> : draft ? <>Rewrite draft <span className="sub">3 credits</span></> : <>Write full draft <span className="sub">3 credits</span></>}
+              </button>
+              <span className="muted" style={{ fontSize: 13 }}>Edit the H1, H2s or key aspects above, add instructions, then {draft ? "rewrite" : "write"}.</span>
+            </div>
           </div>
 
           {draftError && <div className="card" style={{ marginTop: 14, borderColor: "#e6c3ba", background: "#faf1ee" }}><span style={{ color: "#a13a26", fontSize: 14 }}>{draftError}</span></div>}

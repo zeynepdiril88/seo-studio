@@ -28,10 +28,12 @@ Return ONLY the Markdown article — no JSON, no code fences, no preamble. The o
 export async function POST(req: Request) {
   let outline: unknown = null;
   let query = "";
+  let instructions = "";
   try {
     const body = await req.json();
     outline = body.outline ?? null;
     query = String(body.query || "").trim();
+    instructions = String(body.instructions || "").trim().slice(0, 1200);
     if (!outline && !query) throw new Error("empty");
   } catch {
     return NextResponse.json({ error: "Generate an outline first, then write the draft." }, { status: 400 });
@@ -42,6 +44,9 @@ export async function POST(req: Request) {
     (outline
       ? `Write the full article from this outline:\n\n${JSON.stringify(outline)}`
       : `Write a full, GEO-optimized article targeting the query: ${query}`) +
+    (instructions
+      ? `\n\nADDITIONAL INSTRUCTIONS FROM THE USER — follow these exactly; they override the defaults (e.g. word count, tone, structure, a specific H1/H2) wherever they conflict:\n${instructions}`
+      : "") +
     `\n\nToday's date (use for the Last updated line): ${today}`;
 
   try {
