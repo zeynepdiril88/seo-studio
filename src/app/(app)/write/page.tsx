@@ -20,6 +20,38 @@ type Outline = {
   eeatSignals?: { experience: string; expertise: string; authoritativeness: string; trust: string[] };
 };
 
+// Build copy-ready JSON-LD entity schema from the outline: an Article that declares its main
+// entity (about) and related entities (mentions), an author Person (E-E-A-T), and a FAQPage.
+function buildSchema(o: Outline): string {
+  const today = new Date().toISOString().slice(0, 10);
+  const entities = [o.mainEntity, ...(o.relatedEntities || [])].filter(Boolean);
+  const graph: Record<string, unknown>[] = [
+    {
+      "@type": "Article",
+      headline: o.title,
+      description: o.userIntent,
+      about: { "@type": "Thing", name: o.mainEntity },
+      mentions: (o.relatedEntities || []).map((e) => ({ "@type": "Thing", name: e })),
+      author: {
+        "@type": "Person",
+        name: "Author Name",
+        ...(o.eeatSignals?.expertise ? { description: o.eeatSignals.expertise } : {}),
+        knowsAbout: entities,
+      },
+      datePublished: today,
+      dateModified: today,
+    },
+  ];
+  if (o.faq?.length) {
+    graph.push({
+      "@type": "FAQPage",
+      mainEntity: o.faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
+    });
+  }
+  const json = JSON.stringify({ "@context": "https://schema.org", "@graph": graph }, null, 2);
+  return `<script type="application/ld+json">\n${json}\n</script>`;
+}
+
 function WriteInner() {
   const sp = useSearchParams();
   const [query, setQuery] = useState("");
@@ -197,6 +229,20 @@ function WriteInner() {
               ) : null}
             </div>
           )}
+
+          {/* entity schema (JSON-LD) */}
+          <div className="card" style={{ marginTop: 16 }}>
+            <div className="card-hd">
+              <h3>Entity schema (JSON-LD)</h3>
+              <button className="mono" onClick={() => navigator.clipboard?.writeText(buildSchema(outline))} style={{ fontSize: 11, color: "var(--purple)", fontWeight: 600 }}>Copy</button>
+            </div>
+            <p className="muted" style={{ fontSize: 13, marginBottom: 10, lineHeight: 1.5 }}>
+              Structured data built from this outline — the main entity (<code>about</code>), related entities
+              (<code>mentions</code>), the author, and the FAQ. Paste it into the page&apos;s <code>&lt;head&gt;</code> so
+              Google and AI engines recognize your entities.
+            </p>
+            <pre style={{ overflowX: "auto", background: "var(--nav)", border: "1px solid var(--line)", borderRadius: 10, padding: 14, fontSize: 12, lineHeight: 1.5, fontFamily: "var(--mono)", margin: 0 }}>{buildSchema(outline)}</pre>
+          </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 20, flexWrap: "wrap" }}>
             <button className="btn" onClick={genDraft} disabled={drafting}>
