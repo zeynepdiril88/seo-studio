@@ -17,7 +17,8 @@ export type IconKey =
   | "send"
   | "pen"
   | "calendar"
-  | "chart";
+  | "chart"
+  | "code";
 
 export const MODULES: AppModule[] = [
   {
@@ -55,6 +56,15 @@ export const MODULES: AppModule[] = [
     status: "live",
     group: "Content",
     icon: "pen",
+  },
+  {
+    name: "Entity Schema",
+    short: "Schema",
+    href: "/schema",
+    blurb: "Copy-ready JSON-LD — declare your main entity, related entities, author and FAQ for Google & AI.",
+    status: "live",
+    group: "Content",
+    icon: "code",
   },
   {
     name: "Opportunity Report",

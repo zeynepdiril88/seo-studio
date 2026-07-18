@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { buildSchema } from "@/lib/schema";
 
 type Section = { h2: string; directAnswer: string; keyPoints: string[]; subsections: string[]; entities: string[] };
 type Outline = {
@@ -19,38 +20,6 @@ type Outline = {
   faq: { q: string; a: string }[];
   eeatSignals?: { experience: string; expertise: string; authoritativeness: string; trust: string[] };
 };
-
-// Build copy-ready JSON-LD entity schema from the outline: an Article that declares its main
-// entity (about) and related entities (mentions), an author Person (E-E-A-T), and a FAQPage.
-function buildSchema(o: Outline): string {
-  const today = new Date().toISOString().slice(0, 10);
-  const entities = [o.mainEntity, ...(o.relatedEntities || [])].filter(Boolean);
-  const graph: Record<string, unknown>[] = [
-    {
-      "@type": "Article",
-      headline: o.title,
-      description: o.userIntent,
-      about: { "@type": "Thing", name: o.mainEntity },
-      mentions: (o.relatedEntities || []).map((e) => ({ "@type": "Thing", name: e })),
-      author: {
-        "@type": "Person",
-        name: "Author Name",
-        ...(o.eeatSignals?.expertise ? { description: o.eeatSignals.expertise } : {}),
-        knowsAbout: entities,
-      },
-      datePublished: today,
-      dateModified: today,
-    },
-  ];
-  if (o.faq?.length) {
-    graph.push({
-      "@type": "FAQPage",
-      mainEntity: o.faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
-    });
-  }
-  const json = JSON.stringify({ "@context": "https://schema.org", "@graph": graph }, null, 2);
-  return `<script type="application/ld+json">\n${json}\n</script>`;
-}
 
 function EditText({ value, onChange, style, placeholder }: { value: string; onChange: (v: string) => void; style?: React.CSSProperties; placeholder?: string }) {
   return (

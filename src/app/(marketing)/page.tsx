@@ -76,18 +76,18 @@ export default function Landing() {
         <p className="muted" style={{ fontSize: 16, marginTop: 12, maxWidth: 560 }}>
           Research → topical authority → content that ranks. Each module is a step toward owning your topic.
         </p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16, marginTop: 30 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20, marginTop: 30 }}>
           {MODULES.map((m) => (
-            <Link key={m.href} href={m.href} className="card lift" style={{ display: "block" }}>
+            <Link key={m.href} href={m.href} className="card lift" style={{ display: "flex", flexDirection: "column", padding: 28, minHeight: 220 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ width: 38, height: 38, borderRadius: 10, background: "var(--purple-soft)", color: "var(--purple)", display: "grid", placeItems: "center" }}>
-                  <Icon name={m.icon} size={19} />
+                <span style={{ width: 48, height: 48, borderRadius: 13, background: "var(--purple-soft)", color: "var(--purple)", display: "grid", placeItems: "center" }}>
+                  <Icon name={m.icon} size={24} />
                 </span>
                 <span className={`badge ${m.status === "live" ? "med" : "low"}`}>{m.status === "live" ? "Live" : "Soon"}</span>
               </div>
-              <h3 style={{ fontSize: 17, fontWeight: 700, margin: "16px 0 8px" }}>{m.name}</h3>
-              <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.5 }}>{m.blurb}</p>
-              <span className="accent" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--purple)", fontSize: 13, fontWeight: 600, marginTop: 14 }}>
+              <h3 style={{ fontSize: 19, fontWeight: 700, margin: "20px 0 10px", letterSpacing: "-0.3px" }}>{m.name}</h3>
+              <p className="muted" style={{ fontSize: 14, lineHeight: 1.55 }}>{m.blurb}</p>
+              <span className="accent" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--purple)", fontSize: 13.5, fontWeight: 600, marginTop: "auto", paddingTop: 18 }}>
                 Open <span className="arrow-nudge" style={{ display: "inline-flex" }}><Icon name="arrow" size={15} /></span>
               </span>
             </Link>

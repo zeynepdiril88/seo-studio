@@ -44,6 +44,8 @@ export function Icon({ name, size = 20, className, strokeWidth = 2 }: Props) {
       return <svg {...p}><path d="M20 6 9 17l-5-5" /></svg>;
     case "sparkle":
       return <svg {...p}><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2 2M16 16l2 2M18 6l-2 2M8 16l-2 2" /></svg>;
+    case "code":
+      return <svg {...p}><path d="m16 18 6-6-6-6" /><path d="m8 6-6 6 6 6" /></svg>;
     default:
       return <svg {...p}><circle cx="12" cy="12" r="9" /></svg>;
   }
